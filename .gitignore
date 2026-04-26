@@ -22,6 +22,9 @@ _cache/
 *.docx
 *.pptx
 
+# --- Hugo ---
+*.md
+
 # --- OS / misc ---
 .DS_Store
 Thumbs.db
