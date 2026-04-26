@@ -1,0 +1,27 @@
+# --- R / RStudio ---
+.Rproj.user/
+*.Rproj
+.Rhistory
+.RData
+.Ruserdata
+
+# --- Quarto render outputs ---
+.quarto/
+_site/
+_site_libs/
+_files/
+_cache/
+
+# Quarto intermediate / cache
+*_cache/
+*_files/
+
+# Rendered documents (keep source .qmd, ignore outputs)
+*.html
+*.pdf
+*.docx
+*.pptx
+
+# --- OS / misc ---
+.DS_Store
+Thumbs.db
