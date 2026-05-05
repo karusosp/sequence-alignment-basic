@@ -1,9 +1,13 @@
 ---
-title: "Introduction to Sequence Alignment"
-author: "Karso Suryo Putro"
+title: Introduction to Sequence Alignment
+author: Karso Suryo Putro
 date: today
-format: pdf
+format:
+  hugo:
+    code-fold: true
+  pdf: default
 ---
+
 
 One of the most important thing to do in biology is to compare biological information, which mostly exist in the form of sequences. This is called sequence alignment and is of great importance as the comparison between sequences can provide important biological interpretation, such as finding evolutionary distance, predicting sequence's structure and function based on annotated sequence database, or detecting anomalies in a biological system. It is not an exageration to say that sequence alignment is the backbone of bioinformatics, the study of complex biological data. Here, I would like to explore the common techniques of sequence alignment by implementing the algorithms in R from scratch with the hope of understanding these fundamental techniques even more.
 
@@ -13,41 +17,33 @@ In this blog, firstly I would like to describe the need of efficient algorithm b
 
 Suppose we have two sequences, say both have the length of 6; the first sequence is "ACGTAG" and the second sequnce is "ACATAC". What is the most obvious way to compare those two sequences? One may think that the way to do it is by stacking both sequences and try to give some form of evaluation to it, that is by quantifying how similar are those sequences.
 
-```         
-ACGTAG
-|| ||
-ACATAC
-```
+    ACGTAG
+    || ||
+    ACATAC
 
 In this case we have four similar matched words (or nucleotides) and two mismatchs. One of the most obvious way to evaluate the alignment is by providing scoring system. For example, for each match a score of $+1$ will be added whereas mismatch will give a score of $-1$. In biological sequence, the mismatch usually could be interpreted as mutation event in the form of *substitution* where one nucleotide is substituted with another kind of nucleotide. Therefore the above alignment is having a score $4-2=2$. This is straightforward enough. But there's still problem. Suppose if we use the same scoring system, what if the sequences are best aligned in different way? For instance we have two sequences: "ACGTAG" and "TACGTC". If we do the same as the above, we get the following alignment where nothing is matched at all.
 
-```         
-ACGTAG
-      
-TACGTC
-```
+    ACGTAG
+          
+    TACGTC
 
 In this case, the alignment give a score of $-12$. But if we take a look at both sequences, a different alignment where we shift one of the sequence to the left or right will give us better alignment score:
 
-```         
--ACGTAG
- ||||
-TACGTC-
-```
+    -ACGTAG
+     ||||
+    TACGTC-
 
 Here we have four matchs and four mismatchs, that give us a score of $4 + -(4)$ = 0, which is higher than the previous one. However, in doing so we introduce something new: a *gap* which is denoted by the dashed symbol. And this actually made a biological sense because sequences organism are subject to *insertion* and *deletion* and gap is the representation of it. Therefore, our previous scoring system can be updated to provide gap penalty which in our case is given arbitrarily, where each gap would give score of $-1$. Once we introduce gap to the alignment, there will be complexity because we can add gap to every possible position on the both sequences.
 
 For example if we try to align two sequences, both with the length of just 2: "AT" and "GA"; we have these possible alignment:
 
-```         
-alignment: AT | -AT | -AT | A-T | A-T | AT- | AT- | 
-           GA | GA- | G-A | GA- | -GA | G-A | -GA |
-score    : -2 | -1  | -3  | -3  | -3  | -3  | -3  |
+    alignment: AT | -AT | -AT | A-T | A-T | AT- | AT- | 
+               GA | GA- | G-A | GA- | -GA | G-A | -GA |
+    score    : -2 | -1  | -3  | -3  | -3  | -3  | -3  |
 
-alignment: --AT | -A-T | -AT- | A--T | A-T- | AT-- |
-           GA-- | G-A- | G--A | -GA- | -G-A | --GA |
-score    :  -4  |  -4  |  -4  |  -4  |  -4  |  -4  |
-```
+    alignment: --AT | -A-T | -AT- | A--T | A-T- | AT-- |
+               GA-- | G-A- | G--A | -GA- | -G-A | --GA |
+    score    :  -4  |  -4  |  -4  |  -4  |  -4  |  -4  |
 
 For each alignment, we use the previous scoring system and find the best alignment. In this case the best alignment is the one with $-1$ score. Thus, using a scoring system that capture match, mistmatch, and gap information, we could implement a form of algorithm in a computer machine. This is called *naive approach* to the alignment problem because we try to naively brute-force every possible alignment and find the best one
 
@@ -64,8 +60,10 @@ Those are easy enough to understand, but try to be careful with the recursive pr
 
 For example, suppose we have two sequences, each has the length of just 5: "ATCAG" and "GATCA". If I run my `naive_algorithm()` function, I will get the following:
 
-```{r}
-#| label: naive_alignment()
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 source("scripts/naive_alignment.R")
 seq1 = "ATCAG"
 seq2 = "GATCA"
@@ -75,6 +73,14 @@ naive_alignment(seq1, seq2,
                 gap_score = -1)
 ```
 
+</details>
+
+    Total number of possible alignments: 1683 
+
+    BEST ALIGNMENT(S) with score: 2 
+    -ATCAG 
+    GATCA- 
+
 As you can see from the result, the function iterate over all possible alignments and the total possibility is $1683$ when the sequence is just 5 characters length. What if the length were higher then? Well, I would not recommend you try to run my script beyond 6 character length. The operation cost is too high and you can imagine how impractical if it is used in the real world scenario where most biological sequences have the length of more than one hundred. In fact, I would demonstrate the amount of all possible alignment for two 100-character long sequences. The formula for doing so is given by Delannoy Number:
 
 $$
@@ -83,8 +89,10 @@ $$
 
 Where $m$ and $n$ is the amount of first and second sequence, whereas $k$ denote the amount of non-gap in each alignment (for further understanding, read [wikipedia page for Delannoy Number](https://en.wikipedia.org/wiki/Delannoy_number)). And if we implement that formula in an R code, we get the following:
 
-```{r}
-#| label: delannoy
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 delannoy <- function(m, n) {
   k <- 0:min(m, n)
   sum(choose(m, k) * choose(n, k) * 2^k)
@@ -93,32 +101,13 @@ delannoy <- function(m, n) {
 delannoy(100, 100)  
 ```
 
+</details>
+
+    [1] 2.053717e+75
+
 You see that just with two 100-character long sequences, we almost reach **the eddington number** (approximately $1.57 \times 10^{79}$), a number that represent **the total amount of all atom in the universe!**. We could also illustrate it by creating a graph where the number of possibility increase on logarithmic scale, where as you can see in the below graph, 20-long sequence already contain more than $10^{10}$ possible alignments, which is already computationally hopeless.
 
-```{r}
-#| label: all possible allignment plot
-#| echo: false
-#| out-width: "60%"
-#| fig-align: "center"
-seq_length <- seq(7, 60)
-all_alignment <- c()
-
-for (i in seq_along(seq_length)){
-  all_alignment[i] <- delannoy(seq_length[i], seq_length[i])
-}
-
-df <- data.frame(seq_length, all_alignment)
-
-plot(df$seq_length, log10(df$all_alignment), type = "b", pch = 19, col = "red",
-     xlab = "Sequence Length",
-     ylab = "Total Possible Alignments (log10 scale)",
-     main = "Why Brute Force Alignment is Infeasible")
-
-# Shade the "hopeless" region
-rect(xleft = 20, xright = 60, ybottom = -5, ytop = 50,
-     col = rgb(1, 0, 0, alpha = 0.1), border = NA)
-text(x = 35, y = 10, "Computationally\nhopeless region", col = "red")
-```
+<img src="sequence-alignment-basic.markdown_strict_files/figure-markdown_strict/all%20possible%20allignment%20plot-1.png" style="width:60.0%" data-fig-align="center" />
 
 # Smarter Approach: Introduction to Dynamic Programming
 
@@ -128,7 +117,7 @@ In order to understand, let's firslty clarify our main problem in alignment befo
 
 The key insight is instead of applying the scoring for each alignment, **the score can be immediately determined for each cell within the matrix based on a recurring simple question**: *what is the maximum score for this cell given three possible moves: diagonal (match = +1/mismatch = -1), downward and rightward (gap = -1)?*. And that question is being repetitively asked for every cell within the matrix. And this is much simpler problem than determining all the possible path from the start to end position. If that is a bit too abstract, let's try to imagine it.
 
-::: {#fig-complex-label} ![](figure/scoring_mat_step.png){width="65%"} Step-by-step illustration for filling the alignment matrix with scores. The image is taken from the awesome [Kenko Wong's blog](https://www.kenkoonwong.com/blog/dynamic-programming/) :::
+::: {#fig-complex-label} <img src="figure/scoring_mat_step.png" style="width:65.0%" /> Step-by-step illustration for filling the alignment matrix with scores. The image is taken from the awesome [Kenko Wong's blog](https://www.kenkoonwong.com/blog/dynamic-programming/) :::
 
 And as you can see in the image above, the recurring problem are highlighted with red boxes. And after all the cells within the matrix are filled with the best score, we can find the best alignment by tracing back the path it require to get to the bottom-right cell and this is a trivial matter because we can directly store the move that correspond with the best score during the matrix filling process.
 
@@ -146,7 +135,10 @@ One of the gold standard in sequence alignment that uses dynamic programming is 
 
 For demosntration purpose, I have implemented the algorithm in R which you can directly access within this github repo: [sequence-alignment-basic](https://github.com/karusosp/sequence-alignment-basic). And below is the result of aligning two 50-character long sequences using the script.
 
-```{r}
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 source("scripts/needleman-wunsch.R")
 seq1 <- "TCTTCACCACCATGGAGAAGGCGATACTGGATACATACATAGCATACATA"
 seq2 <- "TATACGGCCATGGCATAGATTCGATCATGTACACAATGACATAGACAGTG"
@@ -156,20 +148,34 @@ cat(" Seq1  :", result$align1, "(Seq Length ", nchar(seq1), ")", "\n",
     "Score :", result$score )
 ```
 
+</details>
+
+     Seq1  : TCTTCACCACCATGG-AGA-AGGCGATAC-TGGATAC-AT-ACATAGCATACA-TA (Seq Length  50 ) 
+     Seq2  : T-AT-ACGGCCATGGCATAGATTCGAT-CATGTACACAATGACATAG---ACAGTG (Seq Length  50 ) 
+     Score : 14
+
 As you can see, the algorithm works wonder, even despite my bad code implementation. It can run for over 500bp sequence without problems. In fact, with much better code implementation it can handle up to thousands sequence. The fact that it is working very fast and with reliable result made this technique a gold standard in sequence alignment. However, it must be noted that this algorithm can only be applied as pairwise-alignment (two sequences only) and global-alignment (it align the whole sequence). Different cases of alignment, for instance multiple sequence alignment or local alignment between unequal-sized sequences, need different algorithms.
 
 # Smith-Waterman Algorithm
 
-Suppose we have two sequences with different length. What we would love to do is to find the region for the larger sequence that correspond with our short sequence with the highest similarity. This kind of case is similar to sequence database search where we want to find out which region from the database sequence where we want to find the kind of sequence we have in hand. As we've discussed previously, using global alignment for this kind of case is not appropriate. What we should do is to align our sequences using one form of local alignment. 
+Suppose we have two sequences with different length. What we would love to do is to find the region for the larger sequence that correspond with our short sequence with the highest similarity. This kind of case is similar to sequence database search where we want to find out which region from the database sequence where we want to find the kind of sequence we have in hand. As we've discussed previously, using global alignment for this kind of case is not appropriate. What we should do is to align our sequences using one form of local alignment.
 
-```{r}
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 seq1 = "GACATAGACAGATACACAGATAGACAGATAGACAGAGATGACACACCGTCGTCACAGTCAGATCAGATGGGATAGCCCAGAGTTTGCACAGTAGC"
 seq2 = "CACACAGTTTAC"
 ```
 
+</details>
+
 We want to align those two sequences using SWA. The step for doing so is actually somewhat similar to the NWA. What we want to do firstly is to create 2 dimensional matrix representation of our sequences.
 
-```{r}
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 generate_2d_matrix = function(seq1, seq2){
   n_col <- nchar(seq1) + 1
   n_row <- nchar(seq2) + 1
@@ -183,9 +189,14 @@ generate_2d_matrix = function(seq1, seq2){
 mat <- generate_2d_matrix(seq1,seq2)
 ```
 
-After we create the matrix representation, what we want to do is to fill the matrix's cells with score. The scoring schema in this step is different from Needleman-Wunsch Algorithm. In that algorithm, we fill the first row and first column with the gap penalty. However, in SWA we just put 0 in both the first row and column. 
+</details>
 
-```{r}
+After we create the matrix representation, what we want to do is to fill the matrix's cells with score. The scoring schema in this step is different from Needleman-Wunsch Algorithm. In that algorithm, we fill the first row and first column with the gap penalty. However, in SWA we just put 0 in both the first row and column.
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 score_matrix = function(mat, 
                         seq1, seq2, 
                         match, 
@@ -234,9 +245,14 @@ mat <- score_matrix(mat,
                     gap_penalty = -1)
 ```
 
-After the matrix is filled with scores, now we worked backward to find the most optimal path that correspond to the optimal local alignment between two sequences. To do this, we firstly need to identify the cell with the highest score and walk from there following the best possible route until it encounter zero cell, in which the alignment stop. 
+</details>
 
-```{r}
+After the matrix is filled with scores, now we worked backward to find the most optimal path that correspond to the optimal local alignment between two sequences. To do this, we firstly need to identify the cell with the highest score and walk from there following the best possible route until it encounter zero cell, in which the alignment stop.
+
+<details class="code-fold">
+<summary>Code</summary>
+
+``` r
 traceback = function(mat, seq1, seq2, match, mismatch, gap_penalty){
   
   seq1_chars <- strsplit(seq1, "")[[1]]
@@ -309,30 +325,17 @@ traceback = function(mat, seq1, seq2, match, mismatch, gap_penalty){
 traceback(mat, seq1, seq2, 1, -1,-1)
 ```
 
-After we work our way to the end and get the result we want, we can summarize our code into: 
-```{r}
-#| eval: false
-#| include: false
-smith_waterman = function(seq1, 
-                          seq2, 
-                          match = 1,
-                          mismatch = -1, 
-                          gap_penalty = -1) {
-  mat     <- generate_2d_matrix(seq1, seq2)
-  mat     <- score_matrix(mat, 
-                          seq1,seq2, 
-                          match, 
-                          mismatch, 
-                          gap_penalty)
-  result  <- traceback(mat, 
-                       seq1, seq2, 
-                       match, 
-                       mismatch, 
-                       gap_penalty)
-  return(result)
-}
-```
+</details>
+
+    $score
+    [1] 6
+
+    $seq1
+    [1] "ACACAG"
+
+    $seq2
+    [1] "ACACAG"
+
+After we work our way to the end and get the result we want, we can summarize our code into:
 
 # Real Case Example
-
-

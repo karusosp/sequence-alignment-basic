@@ -28,7 +28,8 @@ needleman_wunsch <- function(seq1, seq2,
   mat <- generate_2d_matrix(seq1, seq2, gap_penalty)
   
   # Step 2. Fill score matrix and record pointers simultaneously
-  result      <- fill_matrix(mat, seq1, seq2, match_score, mismatch_score, gap_penalty)
+  result      <- fill_matrix(mat, seq1, seq2,
+                             match_score, mismatch_score, gap_penalty)
   score_mat   <- result$score
   pointer_mat <- result$pointer
   
@@ -68,6 +69,7 @@ score_pair <- function(char1, char2, match_score, mismatch_score) {
 #                             requires j-1 gaps
 #   mat[i, 1] = (i-1) * gap : aligning first i-1 chars of seq2 with nothing
 #                             requires i-1 gaps
+
 generate_2d_matrix <- function(seq1, seq2, gap_penalty) {
   n_row <- nchar(seq2) + 1
   n_col <- nchar(seq1) + 1
